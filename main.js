@@ -175,9 +175,17 @@ async function handleTestPayment() {
  * 获取订单信息
  */
 function getOrderInfo() {
-    const orderName = document.getElementById('orderName').value.trim();
-    const orderAmount = document.getElementById('orderAmount').value;
-    const orderDesc = document.getElementById('orderDesc').value.trim();
+    const subjectElement = document.getElementById('subject');
+    const amountElement = document.getElementById('amount');
+    const outTradeNoElement = document.getElementById('out_trade_no');
+    
+    if (!subjectElement || !amountElement) {
+        throw new Error('找不到必要的表单元素');
+    }
+    
+    const orderName = subjectElement.value.trim();
+    const orderAmount = amountElement.value;
+    const orderDesc = orderName; // 使用商品名称作为描述
     
     return {
         subject: orderName,

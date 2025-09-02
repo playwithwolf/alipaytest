@@ -161,6 +161,11 @@ class AlipayH5Server:
             return JSONResponse({"status": "healthy", "timestamp": datetime.now().isoformat(), "version": "1.0.0"})
     
     def run(self):
+        # 切换到脚本所在目录，确保相对路径正确
+        script_dir = Path(__file__).parent
+        os.chdir(script_dir)
+        logger.info(f"Changed working directory to: {script_dir}")
+        
         port = self.port
         logger.info(f"Starting server locally at http://localhost:{port}")
         logger.info("Starting uvicorn...")
