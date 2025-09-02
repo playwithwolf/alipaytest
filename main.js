@@ -52,11 +52,7 @@ function bindEvents() {
         payBtn.addEventListener('click', handlePayment);
     }
     
-    // 测试支付按钮
-    const testBtn = document.getElementById('testBtn');
-    if (testBtn) {
-        testBtn.addEventListener('click', handleTestPayment);
-    }
+
     
     // 支付方式选择
     const paymentOptions = document.querySelectorAll('.payment-option');
@@ -137,39 +133,7 @@ async function handlePayment() {
     }
 }
 
-/**
- * 处理测试支付
- */
-async function handleTestPayment() {
-    try {
-        // 获取订单信息
-        const orderInfo = getOrderInfo();
-        
-        // 验证订单信息
-        if (!validateOrderInfo(orderInfo)) {
-            return;
-        }
-        
-        // 获取动态配置（测试支付可以使用默认配置）
-        const config = getCurrentConfig() || getDefaultConfig();
-        
-        // 显示加载状态
-        showLoading('正在处理测试支付...');
-        
-        // 创建支付宝实例并模拟支付
-        const alipayInstance = new AlipayH5(config);
-        const result = await alipayInstance.mockPay(orderInfo);
-        
-        hideLoading();
-        
-        // 显示结果
-        showPaymentResult(result);
-        
-    } catch (error) {
-        hideLoading();
-        showError('测试支付失败: ' + error.message);
-    }
-}
+
 
 /**
  * 获取订单信息

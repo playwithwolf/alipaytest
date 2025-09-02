@@ -114,24 +114,7 @@ class AlipayH5 {
         }
     }
     
-    /**
-     * 模拟支付（测试用）
-     * @param {Object} orderInfo 订单信息
-     */
-    async mockPay(orderInfo) {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const success = Math.random() > 0.2; // 80% 成功率
-                resolve({
-                    success: success,
-                    order_no: orderInfo.out_trade_no || this.generateOrderNo(),
-                    trade_no: 'MOCK_' + Date.now(),
-                    total_amount: orderInfo.total_amount,
-                    message: success ? '支付成功' : '支付失败'
-                });
-            }, 2000);
-        });
-    }
+
     
     /**
      * 生成订单号
