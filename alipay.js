@@ -10,7 +10,8 @@ class AlipayH5 {
             app_id: config.app_id || '',
             private_key: config.private_key || '',
             alipay_public_key: config.alipay_public_key || '',
-            gateway: config.gateway || 'https://openapi.alipaydev.com/gateway.do',
+           //gateway: config.gateway || 'https://openapi-sandbox.dl.alipaydev.com/gateway.do',
+            gateway:  'https://openapi-sandbox.dl.alipaydev.com/gateway.do',
             notify_url: config.notify_url || '',
             return_url: config.return_url || '',
             charset: 'UTF-8',
@@ -46,46 +47,48 @@ class AlipayH5 {
     }
     
     /**
-     * 创建支付订单
+     * 创建支付订单（使用后端API）
      * @param {Object} orderInfo 订单信息
      * @returns {Promise} 支付结果
      */
     async createPayment(orderInfo) {
         try {
-            // 构建支付参数
-            const bizContent = {
+            // 准备订单数据
+            const paymentRequest = {
                 out_trade_no: orderInfo.out_trade_no || this.generateOrderNo(),
-                total_amount: orderInfo.total_amount,
-                subject: orderInfo.subject,
-                body: orderInfo.body || orderInfo.subject,
-                product_code: 'QUICK_WAP_WAY'
+                total_amount: parseFloat(orderInfo.total_amount),
+                subject: orderInfo.subject
             };
             
-            const params = {
-                app_id: this.config.app_id,
-                method: 'alipay.trade.wap.pay',
-                charset: this.config.charset,
-                sign_type: this.config.sign_type,
-                timestamp: this.getTimestamp(),
-                version: this.config.version,
-                notify_url: this.config.notify_url,
-                return_url: this.config.return_url,
-                biz_content: JSON.stringify(bizContent)
-            };
+            console.log('发送支付请求到后端API:', paymentRequest);
             
-            // 生成签名
-            const sign = this.generateSign(params);
-            params.sign = sign;
+            // 调用后端API创建订单
+            const response = await fetch('/api/alipay/create_order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(paymentRequest)
+            });
             
-            // 构建支付URL
-            const paymentUrl = this.buildPaymentUrl(params);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: '网络错误' }));
+                throw new Error(errorData.detail || `HTTP ${response.status}`);
+            }
             
-            return {
-                success: true,
-                payment_url: paymentUrl,
-                order_no: bizContent.out_trade_no,
-                params: params
-            };
+            const result = await response.json();
+            console.log('后端API响应:', result);
+            
+            if (result.success) {
+                return {
+                    success: true,
+                    payment_url: result.data.pay_url,
+                    order_no: result.data.out_trade_no,
+                    order_string: result.data.order_string
+                };
+            } else {
+                throw new Error(result.message || '创建订单失败');
+            }
             
         } catch (error) {
             console.error('创建支付订单失败:', error);

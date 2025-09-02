@@ -19,6 +19,14 @@ from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from pydantic import BaseModel
 import uvicorn
 
+# 导入支付宝SDK
+from alipay.aop.api.AlipayClientConfig import AlipayClientConfig
+from alipay.aop.api.DefaultAlipayClient import DefaultAlipayClient
+from alipay.aop.api.domain.AlipayTradeWapPayModel import AlipayTradeWapPayModel
+from alipay.aop.api.request.AlipayTradeWapPayRequest import AlipayTradeWapPayRequest
+from alipay.aop.api.response.AlipayTradeWapPayResponse import AlipayTradeWapPayResponse
+from alipay.aop.api.util.SignatureUtils import verify_with_rsa
+
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
@@ -45,6 +53,7 @@ class AlipayH5Server:
     def __init__(self, port: int = 8000):
         self.port = port
         self.current_config: Optional[Dict[str, Any]] = None
+        self.alipay_client: Optional[DefaultAlipayClient] = None
         logger.info(f"Initializing AlipayH5Server with port={port}")
         self.app = FastAPI(
             title="支付宝H5支付服务器",
@@ -52,9 +61,65 @@ class AlipayH5Server:
             version="1.0.0"
         )
         logger.info("FastAPI app created")
+        self.init_alipay_sdk()
         self.setup_middleware()
         self.setup_routes()
         logger.info("Middleware and routes setup completed")
+    
+    def init_alipay_sdk(self):
+        """初始化支付宝SDK"""
+        try:
+            # 默认配置（沙箱环境）
+            default_config = {
+                'app_id': '9021000151657305',  # 沙箱应用ID，请替换为实际的
+                'private_key': '''-----BEGIN RSA PRIVATE KEY-----
+MIIEpQIBAAKCAQEAnNg6Lz+dffDTrtyuhuJzhdwoW2VBAzRfMz6qFlzDVmpyukJFgrP+axHTvkVLP/qYPGk6GmJHP9RotMk4i19efzwR7XY0fbp89sDMXqSQlRvOIxPgKGd6GavXvWcl9xtaPpFyoprBYg+E5Iybv5FgEgCDw4g2TDKAch39wfDfwc5PVOy8duncQudghnHi09Jd+N2lLQ4B+asKKuqSDuosov1TXo0Tl8VacUybJO3CZjjt/tJr2sbmDblE1ITlP4B+pLow0vZ+IhEw2rwMTbdSThO8qDt3llY2BzBHEFGcRs5dn5FlQeTSz+vQT4VIV8fVuIqn0DTjBIeERYo/7HbPrQIDAQABAoIBAQCR3BhIJl39aEBEBuCbee67FuHFFSXfqA28p1MgFsZmD/p/su/XvDInOl3zPZfceNyomac6MBlYh92T+umF23wS0TdO4TWxkwNxqhylC1+V+1S5lFtK1+haBVBNyKYq5poHQ9Ya19ZtrkcFEKoq/jQcqbPf3EW6mOCQv8lkWfCM1yZa3bA6VQMOpRg0RMUTSnnCoASx9cRDQPoZt5ecFUZ4SDZJaRLZ072w/ewT8T5hxa11GMSRP5mT9oE/zOIW62k4+Fn0vv4I8rTzg3tNPsJJOiUiLfRaGtDrPPhh4vBcqaUUSIc7dYMhtz66yvoJULiQz/FtWp4TmzoELL2ammahAoGBAPb3T1T7fOkl5vEAi8g2a4ukn4aEIGLajXpni9AFkPpguwZCvz4txVYJ/QDAAN30ZuZnu5ZdGRABnCKzkBbLA1jQS3PMuqwuFN8cwPSZ1djEAb6Q9PhJkwBn9zr5u6WGztxokPjrvcPonAoujz1XV6iqO6avcxKxQ7c9Trap7uk1AoGBAKKU++U3SC6jYAhSllQ+YfuIxxJOglOMYxn3DYRn5SIwqBULLFp+rQ7FbROp6TDC1kEXC00Xm/1OSlDZIjI14Vav2nP3hjFcTHig0wFJU1Ppl+LhKnQPNagoTn3ger6SW1e9neWqD2youXlyVgwgTZ/Oyuw4sd8eNn/6lz1WNJOZAoGBAIgkjXcrrBBa9JSm2GfmmCLC/a4J6FCWaqevrUNfziw4ZuFsqkB8uuxTVUW0ksXIlXEufhrF96r7ODdpBWWLRK0RJocPtVh1jsvv7e7pXxm/87Y58tFsvbzbk07PnMIDLsYSXtjaHCKDeIGkaRJHs+sm7PtWfPkw/0NkaKAJzcqBAoGBAKBb9KycP00JBdKPqwkC0uAng7rRxwgjQyg8HpAHbeCwP0kqUSAdLBKStkib4Y6fznY7BYGPlONe0jw2Pt1peY5oOz8A2NJc6GxerGDrcw4kLBSy5I2+5ryqrOjJfifz8bZ0J4Z8m2Qgc3iPRsIFJqtGa65dKUwZ38WRZJUyLv+ZAoGAdoY4H/WIB0q73cQs3OyMRg5vneQzaJsSnv5RYq2whz1hbJNQ29UHhDk8Sov7LeEwwM3NOJoa0hlcV3uIp90+IRO0qdli5JUCChAXDJhVdhMDDtApzqd9ejASEUWjrW62sVP/zc5t8o19VXCf7rlbRCUL0UxNg4qdmi4bDg/JblA=
+-----END RSA PRIVATE KEY-----''',
+                'alipay_public_key': '''-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqRUOzanbew6pZy9TriP6DmqyrMRuGqJ6KfbFBHzRvsPc+QY0D3kOnc+TIhJBi+ymfJPty2RdU+gZIJaoZRxHmHyKEdknz5HA/Lv2jHm6GK6wF3WcROb64k99CgsIUesIVCMjZ7r7RQEmEvsz+R4gAgh5kjhGAhGNO3TJK3i2obqPBQBxYdSKDxLryFhWZZWMChIhhwUpZtraJxQWqNOIz24yIhugdlAALYyvTAc8zSCftLr/Imp05apkHT36eKPo1gWbEHiB94haNvwyWqac0AI7lwYq+kLPudp+JYMg5AGrmFLnYwP+7XhMrmk483OfA9yoF4UObTaPBSQ91C7JGQIDAQAB
+-----END PUBLIC KEY-----''',
+                'gateway': 'https://openapi-sandbox.dl.alipaydev.com/gateway.do',
+                'notify_url': 'https://alipaytest.onrender.com/api/alipay/notify',
+                'return_url': 'https://alipaytest.onrender.com/payment/result'
+            }
+            
+            # 尝试从环境变量或配置文件读取配置
+            config = self.load_alipay_config() or default_config
+            
+            # 配置支付宝客户端
+            alipay_client_config = AlipayClientConfig()
+            alipay_client_config.server_url = config['gateway']
+            alipay_client_config.app_id = config['app_id']
+            alipay_client_config.app_private_key = config['private_key']
+            alipay_client_config.alipay_public_key = config['alipay_public_key']
+            
+            # 初始化支付宝客户端
+            self.alipay_client = DefaultAlipayClient(alipay_client_config=alipay_client_config, logger=logger)
+            
+            self.current_config = config
+            logger.info("支付宝SDK初始化成功")
+            
+        except Exception as e:
+            logger.error(f"支付宝SDK初始化失败: {e}")
+            self.alipay_client = None
+    
+    def load_alipay_config(self) -> Optional[Dict[str, str]]:
+        """从配置文件或环境变量加载支付宝配置"""
+        try:
+            # 尝试从环境变量读取
+            if all(os.environ.get(key) for key in ['ALIPAY_APP_ID', 'ALIPAY_PRIVATE_KEY', 'ALIPAY_PUBLIC_KEY']):
+                return {
+                    'app_id': os.environ.get('ALIPAY_APP_ID'),
+                    'private_key': os.environ.get('ALIPAY_PRIVATE_KEY'),
+                    'alipay_public_key': os.environ.get('ALIPAY_PUBLIC_KEY'),
+                    'gateway': os.environ.get('ALIPAY_GATEWAY', 'https://openapi-sandbox.dl.alipaydev.com/gateway.do'),
+                    'notify_url': os.environ.get('ALIPAY_NOTIFY_URL', 'http://localhost:8000/api/alipay/notify'),
+                    'return_url': os.environ.get('ALIPAY_RETURN_URL', 'http://localhost:8000/payment/result')
+                }
+        except Exception as e:
+            logger.warning(f"加载配置失败: {e}")
+        
+        return None
         
     def setup_middleware(self):
         self.app.add_middleware(
@@ -110,6 +175,47 @@ class AlipayH5Server:
             media_type = content_type_map.get(file_full_path.suffix.lower(), "application/octet-stream")
             return FileResponse(file_full_path, media_type=media_type)
         
+        @self.app.post("/api/alipay/create_order")
+        async def create_alipay_order(payment_request: PaymentRequest):
+            """创建支付宝支付订单"""
+            try:
+                if not self.alipay_client:
+                    logger.error("支付宝SDK未初始化")
+                    raise HTTPException(status_code=500, detail="支付宝SDK未初始化")
+                
+                logger.info(f"创建支付订单: {payment_request.dict()}")
+                
+                # 构建支付请求模型
+                model = AlipayTradeWapPayModel()
+                model.out_trade_no = payment_request.out_trade_no
+                model.total_amount = str(payment_request.total_amount)
+                model.subject = payment_request.subject
+                model.product_code = "QUICK_WAP_WAY"
+                
+                # 创建支付请求
+                request_obj = AlipayTradeWapPayRequest(biz_model=model)
+                request_obj.return_url = self.current_config.get('return_url', 'http://localhost:8000/payment/result')
+                request_obj.notify_url = self.current_config.get('notify_url', 'http://localhost:8000/api/alipay/notify')
+                
+                # 执行请求
+                response_content = self.alipay_client.page_execute(request_obj, http_method="GET")
+                
+                logger.info(f"支付订单创建成功，订单号: {payment_request.out_trade_no}")
+                
+                return {
+                    "success": True,
+                    "message": "订单创建成功",
+                    "data": {
+                        "out_trade_no": payment_request.out_trade_no,
+                        "pay_url": response_content,
+                        "order_string": response_content
+                    }
+                }
+                
+            except Exception as e:
+                logger.error(f"创建支付订单失败: {e}")
+                raise HTTPException(status_code=500, detail=f"创建支付订单失败: {str(e)}")
+        
         @self.app.get("/payment/result", response_class=HTMLResponse)
         async def payment_result(request: Request):
             query_params = dict(request.query_params)
@@ -156,6 +262,40 @@ class AlipayH5Server:
                 for key, value in notify_data.items():
                     logger.info(f"  {key}: {value}")
                 
+                # 使用SDK验证签名
+                if self.alipay_client and self.current_config:
+                    try:
+                        # 准备验签数据
+                        sign = notify_data.pop('sign', '')
+                        sign_type = notify_data.pop('sign_type', 'RSA2')
+                        
+                        # 构建待验签字符串
+                        sorted_items = sorted(notify_data.items())
+                        unsigned_string = '&'.join([f'{k}={v}' for k, v in sorted_items if v])
+                        
+                        # 验证签名
+                        alipay_public_key = self.current_config.get('alipay_public_key', '')
+                        sign_valid = verify_with_rsa(alipay_public_key, unsigned_string.encode('utf-8'), sign)
+                        
+                        logger.info(f"签名验证结果: {sign_valid}")
+                        
+                        if not sign_valid:
+                            logger.warning("签名验证失败，可能是伪造的通知")
+                            return Response(content="fail", media_type="text/plain")
+                        
+                        logger.info("签名验证成功")
+                        
+                        # 恢复sign和sign_type到notify_data中，供后续使用
+                        notify_data['sign'] = sign
+                        notify_data['sign_type'] = sign_type
+                        
+                    except Exception as verify_error:
+                        logger.error(f"签名验证过程中发生错误: {verify_error}")
+                        # 如果验证过程出错，为了安全起见返回fail
+                        return Response(content="fail", media_type="text/plain")
+                else:
+                    logger.warning("支付宝SDK未初始化，跳过签名验证")
+                
                 # 重点关注的参数
                 important_params = ['out_trade_no', 'trade_no', 'trade_status', 'total_amount', 'subject']
                 logger.info("重要参数摘要:")
@@ -163,9 +303,25 @@ class AlipayH5Server:
                     if param in notify_data:
                         logger.info(f"  {param}: {notify_data[param]}")
                 
+                # 处理支付状态
+                trade_status = notify_data.get('trade_status')
+                out_trade_no = notify_data.get('out_trade_no')
+                trade_no = notify_data.get('trade_no')
+                total_amount = notify_data.get('total_amount')
+                
+                if trade_status == 'TRADE_SUCCESS':
+                    logger.info(f"支付成功 - 订单号: {out_trade_no}, 交易号: {trade_no}, 金额: {total_amount}")
+                    # 这里可以添加业务逻辑，如更新订单状态、发送通知等
+                elif trade_status == 'TRADE_FINISHED':
+                    logger.info(f"交易完成 - 订单号: {out_trade_no}, 交易号: {trade_no}, 金额: {total_amount}")
+                    # 这里可以添加业务逻辑
+                else:
+                    logger.info(f"其他状态: {trade_status} - 订单号: {out_trade_no}")
+                
                 logger.info("异步通知处理完成，返回success")
                 logger.info("=" * 80)
                 return Response(content="success", media_type="text/plain")
+                
             except Exception as e:
                 logger.error("=" * 80)
                 logger.error(f"处理支付宝异步通知时发生错误: {str(e)}")

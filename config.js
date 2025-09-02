@@ -24,7 +24,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ
     
     // 支付宝网关地址
     // gateway: 'https://openapi.alipay.com/gateway.do', // 正式环境
-     gateway: 'https://openapi.alipaydev.com/gateway.do', // 沙箱环境
+     gateway: 'https://openapi-sandbox.dl.alipaydev.com/gateway.do', // 沙箱环境
     
     // 异步通知地址 - 可选
     // 支付完成后，支付宝会向这个地址发送支付结果
@@ -56,7 +56,7 @@ const ALIPAY_CONFIG_DEV = {
     alipay_public_key: `-----BEGIN PUBLIC KEY-----
 // 沙箱环境支付宝公钥
 -----END PUBLIC KEY-----`,
-    gateway: 'https://openapi.alipaydev.com/gateway.do', // 沙箱网关
+    gateway: 'https://openapi-sandbox.dl.alipaydev.com/gateway.do', // 沙箱网关
     notify_url: 'http://localhost:3000/api/alipay/notify',
     return_url: 'http://localhost:3000/payment/result',
     charset: 'UTF-8',
