@@ -79,8 +79,8 @@ MIIEpQIBAAKCAQEAnNg6Lz+dffDTrtyuhuJzhdwoW2VBAzRfMz6qFlzDVmpyukJFgrP+axHTvkVLP/qY
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqRUOzanbew6pZy9TriP6DmqyrMRuGqJ6KfbFBHzRvsPc+QY0D3kOnc+TIhJBi+ymfJPty2RdU+gZIJaoZRxHmHyKEdknz5HA/Lv2jHm6GK6wF3WcROb64k99CgsIUesIVCMjZ7r7RQEmEvsz+R4gAgh5kjhGAhGNO3TJK3i2obqPBQBxYdSKDxLryFhWZZWMChIhhwUpZtraJxQWqNOIz24yIhugdlAALYyvTAc8zSCftLr/Imp05apkHT36eKPo1gWbEHiB94haNvwyWqac0AI7lwYq+kLPudp+JYMg5AGrmFLnYwP+7XhMrmk483OfA9yoF4UObTaPBSQ91C7JGQIDAQAB
 -----END PUBLIC KEY-----''',
                 'gateway': 'https://openapi-sandbox.dl.alipaydev.com/gateway.do',
-                'notify_url': 'https://alipaytest.onrender.com/api/alipay/notify',
-                'return_url': 'https://alipaytest.onrender.com/payment/result'
+                'notify_url': 'http://localhost:8000/api/alipay/notify',
+                'return_url': 'http://localhost:8000/payment/result'
             }
             
             # 尝试从环境变量或配置文件读取配置

@@ -112,5 +112,74 @@
     <script src="config.js"></script>
     <script src="alipay.js"></script>
     <script src="main.js"></script>
+    
+    <script>
+        // 检查支付返回结果
+        function checkPaymentReturn() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('out_trade_no')) {
+                const result = {
+                    out_trade_no: urlParams.get('out_trade_no'),
+                    trade_no: urlParams.get('trade_no'),
+                    total_amount: urlParams.get('total_amount'),
+                    trade_status: urlParams.get('trade_status')
+                };
+                
+                console.log('支付返回结果:', result);
+                
+                // 显示支付结果
+                const resultDiv = document.createElement('div');
+                resultDiv.innerHTML = `
+                    <h3>支付结果</h3>
+                    <p>订单号: ${result.out_trade_no}</p>
+                    <p>交易号: ${result.trade_no}</p>
+                    <p>金额: ${result.total_amount}</p>
+                    <p>状态: ${result.trade_status}</p>
+                `;
+                document.body.appendChild(resultDiv);
+            }
+        }
+        
+        // 添加调试按钮
+        function addDebugButton() {
+            const debugBtn = document.createElement('button');
+            debugBtn.textContent = '测试支付请求';
+            debugBtn.style.cssText = 'margin: 10px; padding: 10px; background: #ff6600; color: white; border: none; border-radius: 4px;';
+            debugBtn.onclick = async function() {
+                try {
+                    console.log('开始测试支付请求...');
+                    const response = await fetch('/api/alipay/create_order', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            subject: '测试商品',
+                            total_amount: 0.01,
+                            out_trade_no: 'TEST' + Date.now()
+                        })
+                    });
+                    const result = await response.json();
+                    console.log('支付请求响应:', result);
+                    if (result.success && result.data.pay_url) {
+                        console.log('跳转到支付页面:', result.data.pay_url);
+                        window.location.href = result.data.pay_url;
+                    } else {
+                        alert('支付请求失败: ' + (result.message || '未知错误'));
+                    }
+                } catch (error) {
+                    console.error('支付请求错误:', error);
+                    alert('支付请求错误: ' + error.message);
+                }
+            };
+            document.querySelector('.payment-form').appendChild(debugBtn);
+        }
+        
+        // 页面加载时检查支付返回并添加调试按钮
+        window.onload = function() {
+            checkPaymentReturn();
+            addDebugButton();
+        };
+    </script>
 </body>
 </html>
