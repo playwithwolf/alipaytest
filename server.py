@@ -45,13 +45,16 @@ class AlipayH5Server:
     def __init__(self, port: int = 8000):
         self.port = port
         self.current_config: Optional[Dict[str, Any]] = None
+        logger.info(f"Initializing AlipayH5Server with port={port}")
         self.app = FastAPI(
             title="支付宝H5支付服务器",
             description="支持动态配置的支付宝H5支付测试服务器",
             version="1.0.0"
         )
+        logger.info("FastAPI app created")
         self.setup_middleware()
         self.setup_routes()
+        logger.info("Middleware and routes setup completed")
         
     def setup_middleware(self):
         self.app.add_middleware(
@@ -61,6 +64,7 @@ class AlipayH5Server:
             allow_methods=["*"],
             allow_headers=["*"],
         )
+        logger.info("CORS middleware added")
         
         @self.app.middleware("http")
         async def log_requests(request: Request, call_next):
@@ -71,16 +75,21 @@ class AlipayH5Server:
             return response
     
     def setup_routes(self):
+        logger.info("Setting up routes...")
+
         @self.app.get("/", response_class=HTMLResponse)
         async def serve_index():
+            logger.info("Serving index.html")
             try:
                 with open("index.html", "r", encoding="utf-8") as f:
                     return HTMLResponse(content=f.read())
             except FileNotFoundError:
+                logger.error("index.html not found")
                 raise HTTPException(status_code=404, detail="index.html not found")
         
         @self.app.get("/{file_path:path}")
         async def serve_static_files(file_path: str):
+            logger.info(f"Request for static file: {file_path}")
             if ".." in file_path or file_path.startswith("/"):
                 raise HTTPException(status_code=403, detail="Access denied")
             file_full_path = Path(file_path)
@@ -104,33 +113,8 @@ class AlipayH5Server:
         @self.app.get("/payment/result", response_class=HTMLResponse)
         async def payment_result(request: Request):
             query_params = dict(request.query_params)
-            logger.info(f"Payment result page accessed with params: {query_params}")
-            html_content = f"""
-            <!DOCTYPE html>
-            <html lang="zh-CN">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>支付结果</title>
-                <style>
-                    body {{ font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }}
-                    .container {{ max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-                    .info {{ background: #f6f8fa; padding: 15px; border-radius: 4px; margin: 20px 0; }}
-                    pre {{ background: #f8f8f8; padding: 10px; border-radius: 4px; overflow-x: auto; }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <h1>支付结果</h1>
-                    <div class="info">
-                        <h3>返回参数：</h3>
-                        <pre>{json.dumps(query_params, indent=2, ensure_ascii=False)}</pre>
-                    </div>
-                    <p><a href="/">返回首页</a></p>
-                </div>
-            </body>
-            </html>
-            """
+            logger.info(f"Payment result accessed with params: {query_params}")
+            html_content = f"<html><body><pre>{json.dumps(query_params, indent=2)}</pre></body></html>"
             return HTMLResponse(content=html_content)
         
         @self.app.post("/api/alipay/notify")
@@ -146,10 +130,10 @@ class AlipayH5Server:
         
         @self.app.post("/api/config")
         async def save_config(config: AlipayConfig):
+            logger.info(f"Saving config for app_id: {config.app_id}")
             if not config.app_id or not config.private_key:
                 raise HTTPException(status_code=400, detail="app_id and private_key are required")
             self.current_config = config.model_dump()
-            logger.info(f"Configuration saved for app_id: {config.app_id}")
             return JSONResponse({
                 "success": True,
                 "message": "配置保存成功",
@@ -158,6 +142,7 @@ class AlipayH5Server:
         
         @self.app.get("/api/config")
         async def load_config():
+            logger.info("Loading config")
             if not self.current_config:
                 return JSONResponse({"success": False, "message": "暂无配置信息"})
             safe_config = {
@@ -172,20 +157,24 @@ class AlipayH5Server:
         
         @self.app.get("/health")
         async def health_check():
+            logger.info("Health check requested")
             return JSONResponse({"status": "healthy", "timestamp": datetime.now().isoformat(), "version": "1.0.0"})
     
     def run(self):
-        """本地运行"""
         port = self.port
         logger.info(f"Starting server locally at http://localhost:{port}")
-        uvicorn.run(self.app, host="0.0.0.0", port=port, log_level="info", access_log=False)
+        logger.info("Starting uvicorn...")
+        uvicorn.run(self.app, host="0.0.0.0", port=port, log_level="info", access_log=True)
 
 
-# ===== 方案1：Render 部署直接暴露 app =====
+# ===== Render 部署 =====
+logger.info(f"Environment PORT={os.environ.get('PORT')}")
 port = int(os.environ.get("PORT", 8000))
 server_instance = AlipayH5Server(port=port)
-app = server_instance.app  # uvicorn Render 部署可以直接访问
+logger.info("Server instance created, FastAPI app exposed as 'app'")
+app = server_instance.app  # Render 部署直接暴露 FastAPI app
 
 # ===== 本地运行 =====
 if __name__ == "__main__":
+    logger.info("Running locally")
     server_instance.run()
