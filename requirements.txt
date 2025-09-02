@@ -1,6 +1,6 @@
 # FastAPI和相关依赖 - 使用Python 3.13完全兼容的版本
 fastapi==0.63.0
-uvicorn==0.12.3
+uvicorn==0.11.8
 python-multipart==0.0.5
 
 # 数据验证 - 使用早期稳定版本
