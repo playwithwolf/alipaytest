@@ -1,10 +1,10 @@
 # FastAPI和相关依赖
-fastapi==0.68.0
-uvicorn==0.15.0
+fastapi==0.65.2
+uvicorn==0.13.4
 python-multipart==0.0.5
 
-# 数据验证 - 使用v1版本避免Rust编译问题
-pydantic==1.10.12
+# 数据验证 - 使用更早期版本确保Python 3.13兼容性
+pydantic==1.8.2
 
 # 支付宝SDK
 alipay-sdk-python==3.7.779
