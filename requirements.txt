@@ -9,8 +9,8 @@ pydantic==2.5.0
 # 支付宝SDK（可选，用于更完整的支付功能）
 alipay-sdk-python==3.7.779
 
-# 加密相关
-cryptography==41.0.7
+# 加密相关 - 使用较旧但稳定的版本避免Rust编译问题
+cryptography==3.4.8
 
 # 其他工具
 requests==2.31.0
