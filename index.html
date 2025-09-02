@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>支付宝支付 - H5支付页面</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 支付宝H5支付</h1>
+            <p>安全、便捷的移动支付体验</p>
+        </div>
+
+        <!-- 配置参数区域 -->
+        <div class="config-section">
+            <h3>⚙️ 支付宝配置参数</h3>
+            <div class="config-toggle">
+                <button type="button" id="toggleConfig" class="toggle-btn">显示配置</button>
+            </div>
+            <div class="config-form" id="configForm" style="display: none;">
+                <div class="form-group">
+                    <label for="app_id">应用ID (app_id) *</label>
+                    <input type="text" id="app_id" placeholder="请输入支付宝应用ID" required>
+                    <small>从支付宝开放平台获取的应用APPID</small>
+                </div>
+                <div class="form-group">
+                    <label for="private_key">商户私钥 (private_key) *</label>
+                    <textarea id="private_key" placeholder="请输入RSA2私钥内容" rows="4" required></textarea>
+                    <small>应用私钥，用于签名验证（请妥善保管）</small>
+                </div>
+                <div class="form-group">
+                    <label for="alipay_public_key">支付宝公钥 (alipay_public_key) *</label>
+                    <textarea id="alipay_public_key" placeholder="请输入支付宝公钥内容" rows="4" required></textarea>
+                    <small>支付宝公钥，用于验证支付宝返回的数据</small>
+                </div>
+                <div class="form-group">
+                    <label for="notify_url">异步通知地址 (notify_url)</label>
+                    <input type="url" id="notify_url" placeholder="http://localhost:8000/api/alipay/notify" value="http://localhost:8000/api/alipay/notify">
+                    <small>支付宝异步通知回调地址</small>
+                </div>
+                <div class="form-group">
+                    <label for="return_url">同步跳转地址 (return_url)</label>
+                    <input type="url" id="return_url" placeholder="http://localhost:8000/payment/result" value="http://localhost:8000/payment/result">
+                    <small>支付完成后的页面跳转地址</small>
+                </div>
+                <div class="form-group">
+                    <label for="gateway">支付网关</label>
+                    <select id="gateway">
+                        <option value="https://openapi.alipaydev.com/gateway.do">沙箱环境</option>
+                        <option value="https://openapi.alipay.com/gateway.do">正式环境</option>
+                    </select>
+                    <small>选择支付宝网关环境</small>
+                </div>
+                <div class="config-actions">
+                    <button type="button" id="saveConfig" class="save-config-btn">保存配置</button>
+                    <button type="button" id="loadConfig" class="load-config-btn">加载配置</button>
+                    <button type="button" id="clearConfig" class="clear-config-btn">清空配置</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="payment-form">
+            <div class="order-info">
+                <h3>📋 订单信息</h3>
+                <div class="form-group">
+                    <label for="subject">商品名称</label>
+                    <input type="text" id="subject" placeholder="请输入商品名称" value="测试商品">
+                </div>
+                <div class="form-group">
+                    <label for="amount">支付金额 (元)</label>
+                    <input type="number" id="amount" placeholder="0.01" value="0.01" min="0.01" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="out_trade_no">商户订单号</label>
+                    <input type="text" id="out_trade_no" placeholder="自动生成" readonly>
+                </div>
+            </div>
+            
+            <div class="payment-methods">
+                <h2>支付方式</h2>
+                <div class="payment-option selected" data-method="alipay">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzAwOUZFOCIvPgo8cGF0aCBkPSJNMTIgMTZIMjhWMjRIMTJWMTZaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTYgMjBIMjQiIHN0cm9rZT0iIzAwOUZFOCIgc3Ryb2tlLXdpZHRoPSIyIi8+CjwvcGF0aD4KPC9zdmc+" alt="支付宝">
+                    <span>支付宝支付</span>
+                    <div class="check-icon">✓</div>
+                </div>
+            </div>
+            
+            <div class="payment-actions">
+                <button id="payBtn" class="pay-button">立即支付</button>
+                <button id="testBtn" class="test-button">测试支付</button>
+            </div>
+        </div>
+        
+        <div class="result-area" id="resultArea" style="display: none;">
+            <h2>支付结果</h2>
+            <div id="resultContent"></div>
+        </div>
+        
+        <div class="config-info">
+            <h2>配置说明</h2>
+            <p>请在 <code>config.js</code> 文件中配置您的支付宝应用信息</p>
+            <ul>
+                <li>应用ID (app_id)</li>
+                <li>商户私钥 (private_key)</li>
+                <li>支付宝公钥 (alipay_public_key)</li>
+                <li>回调地址 (notify_url, return_url)</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script src="config.js"></script>
+    <script src="alipay.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

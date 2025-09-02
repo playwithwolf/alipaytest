@@ -1,0 +1,17 @@
+# FastAPI和相关依赖
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# 数据验证
+pydantic==2.5.0
+
+# 支付宝SDK（可选，用于更完整的支付功能）
+alipay-sdk-python==3.7.1
+
+# 加密相关
+cryptography==41.0.7
+
+# 其他工具
+requests==2.31.0
+python-dateutil==2.8.2
