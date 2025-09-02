@@ -113,19 +113,64 @@ class AlipayH5Server:
         @self.app.get("/payment/result", response_class=HTMLResponse)
         async def payment_result(request: Request):
             query_params = dict(request.query_params)
-            logger.info(f"Payment result accessed with params: {query_params}")
+            logger.info("=" * 60)
+            logger.info("支付结果页面被访问 - /payment/result")
+            logger.info(f"访问时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info(f"客户端IP: {request.client.host if request.client else 'Unknown'}")
+            logger.info(f"User-Agent: {request.headers.get('user-agent', 'Unknown')}")
+            logger.info(f"完整URL: {request.url}")
+            logger.info(f"查询参数: {query_params}")
+            
+            # 解析支付宝返回的参数
+            if query_params:
+                logger.info("支付宝同步返回参数解析:")
+                for key, value in query_params.items():
+                    logger.info(f"  {key}: {value}")
+            else:
+                logger.info("未收到任何查询参数")
+            
+            logger.info("=" * 60)
             html_content = f"<html><body><pre>{json.dumps(query_params, indent=2)}</pre></body></html>"
             return HTMLResponse(content=html_content)
         
         @self.app.post("/api/alipay/notify")
         async def alipay_notify(request: Request):
             try:
+                logger.info("=" * 80)
+                logger.info("收到支付宝异步通知 - /api/alipay/notify")
+                logger.info(f"通知时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                logger.info(f"客户端IP: {request.client.host if request.client else 'Unknown'}")
+                logger.info(f"Content-Type: {request.headers.get('content-type', 'Unknown')}")
+                logger.info(f"User-Agent: {request.headers.get('user-agent', 'Unknown')}")
+                
+                # 获取原始请求体
+                body = await request.body()
+                logger.info(f"原始请求体: {body.decode('utf-8') if body else 'Empty'}")
+                
+                # 重新创建request以获取form数据
+                request._body = body
                 form_data = await request.form()
                 notify_data = dict(form_data)
-                logger.info(f"Received Alipay notify: {notify_data}")
+                
+                logger.info("支付宝异步通知参数:")
+                for key, value in notify_data.items():
+                    logger.info(f"  {key}: {value}")
+                
+                # 重点关注的参数
+                important_params = ['out_trade_no', 'trade_no', 'trade_status', 'total_amount', 'subject']
+                logger.info("重要参数摘要:")
+                for param in important_params:
+                    if param in notify_data:
+                        logger.info(f"  {param}: {notify_data[param]}")
+                
+                logger.info("异步通知处理完成，返回success")
+                logger.info("=" * 80)
                 return Response(content="success", media_type="text/plain")
             except Exception as e:
-                logger.error(f"Error processing Alipay notify: {str(e)}")
+                logger.error("=" * 80)
+                logger.error(f"处理支付宝异步通知时发生错误: {str(e)}")
+                logger.error(f"错误时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                logger.error("=" * 80)
                 return Response(content="fail", media_type="text/plain")
         
         @self.app.post("/api/config")
