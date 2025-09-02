@@ -170,9 +170,26 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqRUOzanbew6pZy9TriP6DmqyrMRuGqJ6KfbF
             
             logger.info("[PAYMENT_RESULT] 准备返回HTML响应")
             logger.info("=" * 60)
-            html_content = f"<html><body><h1>支付结果</h1><pre>{json.dumps(query_params, indent=2)}</pre></body></html>"
-            logger.info("[PAYMENT_RESULT] HTML内容已生成，返回响应")
-            return HTMLResponse(content=html_content)
+            
+            # 读取支付结果页面模板
+            try:
+                with open("payment_result.html", "r", encoding="utf-8") as f:
+                    html_content = f.read()
+                logger.info("[PAYMENT_RESULT] 支付结果页面模板加载成功")
+                return HTMLResponse(content=html_content)
+            except FileNotFoundError:
+                logger.error("payment_result.html not found, using fallback")
+                # 如果模板文件不存在，使用简单的回退页面
+                fallback_html = f"""
+                <!DOCTYPE html>
+                <html><head><title>支付结果</title></head>
+                <body style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h1>支付结果</h1>
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px;">{json.dumps(query_params, indent=2, ensure_ascii=False)}</pre>
+                    <a href="/" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px;">返回首页</a>
+                </body></html>
+                """
+                return HTMLResponse(content=fallback_html)
 
         @self.app.get("/", response_class=HTMLResponse)
         async def serve_index():

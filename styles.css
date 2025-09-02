@@ -25,6 +25,97 @@ body {
     min-height: 100vh;
 }
 
+/* 成功横幅样式 */
+.success-banner {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border: 2px solid #28a745;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.15);
+    animation: slideInDown 0.6s ease-out;
+}
+
+.success-icon {
+    font-size: 48px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.success-content {
+    flex: 1;
+}
+
+.success-content h2 {
+    color: #155724;
+    margin: 0 0 15px 0;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.success-details {
+    margin-bottom: 20px;
+}
+
+.success-details p {
+    margin: 8px 0;
+    color: #155724;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.success-details strong {
+    color: #0d4017;
+    font-weight: 600;
+}
+
+.test-result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.test-badge {
+    background: #28a745;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.test-status {
+    background: #d1ecf1;
+    color: #0c5460;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid #bee5eb;
+}
+
+.test-time {
+    color: #6c757d;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* 配置区域样式 */
 .config-section {
     margin-bottom: 30px;

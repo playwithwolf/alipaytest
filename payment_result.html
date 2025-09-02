@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>支付结果 - 支付宝H5支付</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .result-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            overflow: hidden;
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .result-header.failed {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+        }
+
+        .result-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .result-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .result-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .result-content {
+            padding: 30px;
+        }
+
+        .payment-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: #212529;
+            font-size: 14px;
+            text-align: right;
+            max-width: 60%;
+            word-break: break-all;
+        }
+
+        .amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: #28a745;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .timestamp {
+            text-align: center;
+            color: #6c757d;
+            font-size: 12px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .result-container {
+                margin: 10px;
+            }
+            
+            .result-header {
+                padding: 20px;
+            }
+            
+            .result-content {
+                padding: 20px;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="result-container">
+        <div class="result-header" id="resultHeader">
+            <span class="result-icon" id="resultIcon">✅</span>
+            <h1 class="result-title" id="resultTitle">支付成功</h1>
+            <p class="result-subtitle" id="resultSubtitle">您的订单已完成支付</p>
+        </div>
+        
+        <div class="result-content">
+            <div class="payment-info" id="paymentInfo">
+                <!-- 支付信息将通过JavaScript动态填充 -->
+            </div>
+            
+            <div class="actions">
+                <a href="/" class="btn btn-primary">
+                    🏠 返回首页
+                </a>
+                <button class="btn btn-secondary" onclick="window.print()">
+                    🖨️ 打印凭证
+                </button>
+            </div>
+            
+            <div class="timestamp" id="timestamp">
+                <!-- 时间戳将通过JavaScript填充 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 解析URL参数
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const result = {};
+            for (const [key, value] of params) {
+                result[key] = value;
+            }
+            return result;
+        }
+
+        // 格式化金额
+        function formatAmount(amount) {
+            return `¥${parseFloat(amount).toFixed(2)}`;
+        }
+
+        // 格式化时间
+        function formatTime(timestamp) {
+            if (!timestamp) return new Date().toLocaleString('zh-CN');
+            return new Date(timestamp).toLocaleString('zh-CN');
+        }
+
+        // 渲染支付结果
+        function renderPaymentResult() {
+            const params = getUrlParams();
+            const paymentInfo = document.getElementById('paymentInfo');
+            const timestamp = document.getElementById('timestamp');
+            
+            // 检查是否有支付参数
+            if (Object.keys(params).length === 0) {
+                // 没有参数，显示错误状态
+                document.getElementById('resultHeader').classList.add('failed');
+                document.getElementById('resultIcon').textContent = '❌';
+                document.getElementById('resultTitle').textContent = '支付异常';
+                document.getElementById('resultSubtitle').textContent = '未收到支付结果参数';
+                
+                paymentInfo.innerHTML = `
+                    <div class="info-row">
+                        <span class="info-label">错误信息</span>
+                        <span class="info-value">未收到支付宝返回的参数</span>
+                    </div>
+                `;
+                return;
+            }
+
+            // 构建支付信息显示
+            let infoHtml = '';
+            
+            // 订单号
+            if (params.out_trade_no) {
+                infoHtml += `
+                    <div class="info-row">
+                        <span class="info-label">订单号</span>
+                        <span class="info-value">${params.out_trade_no}</span>
+                    </div>
+                `;
+            }
+            
+            // 支付金额
+            if (params.total_amount) {
+                infoHtml += `
+                    <div class="info-row">
+                        <span class="info-label">支付金额</span>
+                        <span class="info-value amount">${formatAmount(params.total_amount)}</span>
+                    </div>
+                `;
+            }
+            
+            // 支付宝交易号
+            if (params.trade_no) {
+                infoHtml += `
+                    <div class="info-row">
+                        <span class="info-label">支付宝交易号</span>
+                        <span class="info-value">${params.trade_no}</span>
+                    </div>
+                `;
+            }
+            
+            // 支付时间
+            if (params.timestamp) {
+                infoHtml += `
+                    <div class="info-row">
+                        <span class="info-label">支付时间</span>
+                        <span class="info-value">${formatTime(params.timestamp)}</span>
+                    </div>
+                `;
+            }
+            
+            // 支付方式
+            if (params.method) {
+                const methodName = params.method === 'alipay.trade.wap.pay.return' ? '支付宝H5支付' : params.method;
+                infoHtml += `
+                    <div class="info-row">
+                        <span class="info-label">支付方式</span>
+                        <span class="info-value">${methodName}</span>
+                    </div>
+                `;
+            }
+            
+            // 商户ID
+            if (params.seller_id) {
+                infoHtml += `
+                    <div class="info-row">
+                        <span class="info-label">商户ID</span>
+                        <span class="info-value">${params.seller_id}</span>
+                    </div>
+                `;
+            }
+            
+            paymentInfo.innerHTML = infoHtml;
+            
+            // 设置时间戳
+            timestamp.textContent = `页面生成时间: ${new Date().toLocaleString('zh-CN')}`;
+        }
+
+        // 页面加载完成后渲染结果
+        document.addEventListener('DOMContentLoaded', renderPaymentResult);
+    </script>
+</body>
+</html>
