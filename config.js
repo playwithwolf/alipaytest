@@ -28,11 +28,11 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ
     
     // 异步通知地址 - 可选
     // 支付完成后，支付宝会向这个地址发送支付结果
-    notify_url: 'https://nodejsgoogle.onrender.com/api/alipay/notify',
+    notify_url: 'https://alipaytest.onrender.com/api/alipay/notify',
     
     // 同步返回地址 - 可选
     // 支付完成后，用户会被重定向到这个地址
-    return_url: 'https://nodejsgoogle.onrender.com/payment/result',
+    return_url: 'https://alipaytest.onrender.com/payment/result',
     
     // 字符编码
     charset: 'UTF-8',
@@ -57,8 +57,8 @@ const ALIPAY_CONFIG_DEV = {
 // 沙箱环境支付宝公钥
 -----END PUBLIC KEY-----`,
     gateway: 'https://openapi-sandbox.dl.alipaydev.com/gateway.do', // 沙箱网关
-    notify_url: 'http://localhost:3000/api/alipay/notify',
-    return_url: 'http://localhost:3000/payment/result',
+    notify_url: 'https://alipaytest.onrender.com/api/alipay/notify',
+    return_url: 'https://alipaytest.onrender.com/payment/result',
     charset: 'UTF-8',
     sign_type: 'RSA2',
     format: 'JSON',
