@@ -188,7 +188,7 @@ class AlipayH5Server:
                     raise HTTPException(status_code=400, detail="app_id and private_key are required")
                 
                 # 保存配置到内存（实际项目中可能需要持久化存储）
-                self.current_config = config.dict()
+                self.current_config = config.model_dump()
                 
                 logger.info(f"Configuration saved for app_id: {config.app_id}")
                 
