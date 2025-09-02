@@ -9,6 +9,7 @@
 import os
 import json
 import logging
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
@@ -134,16 +135,48 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqRUOzanbew6pZy9TriP6DmqyrMRuGqJ6KfbF
         @self.app.middleware("http")
         async def log_requests(request: Request, call_next):
             start_time = datetime.now()
+            logger.info(f"[REQUEST] {request.method} {request.url.path} - Query: {dict(request.query_params)}")
+            logger.info(f"[REQUEST] Headers: {dict(request.headers)}")
+            
             response = await call_next(request)
+            
             process_time = (datetime.now() - start_time).total_seconds()
-            logger.info(f"{request.method} {request.url.path} - {response.status_code} - {process_time:.3f}s")
+            logger.info(f"[RESPONSE] {request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.3f}s")
             return response
     
     def setup_routes(self):
         logger.info("Setting up routes...")
 
+        # 首先定义API路由，确保它们优先于静态文件路由
+        @self.app.get("/payment/result", response_class=HTMLResponse)
+        async def payment_result(request: Request):
+            logger.info("[ROUTE] 进入 /payment/result 路由处理函数")
+            query_params = dict(request.query_params)
+            logger.info("=" * 60)
+            logger.info("[PAYMENT_RESULT] 支付结果页面被访问 - /payment/result")
+            logger.info(f"[PAYMENT_RESULT] 访问时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info(f"[PAYMENT_RESULT] 客户端IP: {request.client.host if request.client else 'Unknown'}")
+            logger.info(f"[PAYMENT_RESULT] User-Agent: {request.headers.get('user-agent', 'Unknown')}")
+            logger.info(f"[PAYMENT_RESULT] 完整URL: {request.url}")
+            logger.info(f"[PAYMENT_RESULT] 查询参数: {query_params}")
+            
+            # 解析支付宝返回的参数
+            if query_params:
+                logger.info("支付宝同步返回参数解析:")
+                for key, value in query_params.items():
+                    logger.info(f"  {key}: {value}")
+            else:
+                logger.info("未收到任何查询参数")
+            
+            logger.info("[PAYMENT_RESULT] 准备返回HTML响应")
+            logger.info("=" * 60)
+            html_content = f"<html><body><h1>支付结果</h1><pre>{json.dumps(query_params, indent=2)}</pre></body></html>"
+            logger.info("[PAYMENT_RESULT] HTML内容已生成，返回响应")
+            return HTMLResponse(content=html_content)
+
         @self.app.get("/", response_class=HTMLResponse)
         async def serve_index():
+            logger.info("[ROUTE] 访问根路径 /")
             logger.info("Serving index.html")
             try:
                 with open("index.html", "r", encoding="utf-8") as f:
@@ -152,6 +185,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqRUOzanbew6pZy9TriP6DmqyrMRuGqJ6KfbF
                 logger.error("index.html not found")
                 raise HTTPException(status_code=404, detail="index.html not found")
         
+        # 静态文件路由放在最后，避免覆盖API路由
         @self.app.get("/{file_path:path}")
         async def serve_static_files(file_path: str):
             logger.info(f"Request for static file: {file_path}")
@@ -218,14 +252,15 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqRUOzanbew6pZy9TriP6DmqyrMRuGqJ6KfbF
         
         @self.app.get("/payment/result", response_class=HTMLResponse)
         async def payment_result(request: Request):
+            logger.info("[ROUTE] 进入 /payment/result 路由处理函数")
             query_params = dict(request.query_params)
             logger.info("=" * 60)
-            logger.info("支付结果页面被访问 - /payment/result")
-            logger.info(f"访问时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            logger.info(f"客户端IP: {request.client.host if request.client else 'Unknown'}")
-            logger.info(f"User-Agent: {request.headers.get('user-agent', 'Unknown')}")
-            logger.info(f"完整URL: {request.url}")
-            logger.info(f"查询参数: {query_params}")
+            logger.info("[PAYMENT_RESULT] 支付结果页面被访问 - /payment/result")
+            logger.info(f"[PAYMENT_RESULT] 访问时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info(f"[PAYMENT_RESULT] 客户端IP: {request.client.host if request.client else 'Unknown'}")
+            logger.info(f"[PAYMENT_RESULT] User-Agent: {request.headers.get('user-agent', 'Unknown')}")
+            logger.info(f"[PAYMENT_RESULT] 完整URL: {request.url}")
+            logger.info(f"[PAYMENT_RESULT] 查询参数: {query_params}")
             
             # 解析支付宝返回的参数
             if query_params:
@@ -235,8 +270,10 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqRUOzanbew6pZy9TriP6DmqyrMRuGqJ6KfbF
             else:
                 logger.info("未收到任何查询参数")
             
+            logger.info("[PAYMENT_RESULT] 准备返回HTML响应")
             logger.info("=" * 60)
-            html_content = f"<html><body><pre>{json.dumps(query_params, indent=2)}</pre></body></html>"
+            html_content = f"<html><body><h1>支付结果</h1><pre>{json.dumps(query_params, indent=2)}</pre></body></html>"
+            logger.info("[PAYMENT_RESULT] HTML内容已生成，返回响应")
             return HTMLResponse(content=html_content)
         
         @self.app.post("/api/alipay/notify")
