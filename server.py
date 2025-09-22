@@ -293,44 +293,59 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgrluf8ZIERvuHr6P2zRGvX6dm8iQJrJACfHh
                     logger.error("支付宝SDK未初始化")
                     raise HTTPException(status_code=500, detail="支付宝SDK未初始化")
                 
-                logger.info(f"创建APP支付订单: {payment_request.dict()}")
+                # 打印接收到的支付请求
+                logger.info(f"接收到的支付请求: {payment_request.dict()}")
                 
                 # 构建APP支付请求模型
                 model = AlipayTradeAppPayModel()
-     
-                # model.out_trade_no = payment_request.out_trade_no
- 
-                # model.total_amount = str(payment_request.total_amount)
-     
-                # model.subject = payment_request.subject
- 
-                # model.product_code = "QUICK_MSECURITY_PAY"
 
+                # 这里我们打印每个字段的类型和内容，确保数据正确
                 model.timeout_express = "90m"
-                model.total_amount = "0.01" 
+                model.total_amount = "0.01"  # 价格为字符串类型
                 model.seller_id = "2088301194649043"
                 model.product_code = "QUICK_MSECURITY_PAY"
                 model.body = "Iphone6 16G"
                 model.subject = "iphone"
                 model.out_trade_no = "201800000001201"
-              
+                
+                # 打印每个字段的类型
+                logger.info(f"total_amount type: {type(model.total_amount)}, value: {model.total_amount}")
+                logger.info(f"body type: {type(model.body)}, value: {model.body}")
+                logger.info(f"out_trade_no type: {type(model.out_trade_no)}, value: {model.out_trade_no}")
+                logger.info(f"product_code type: {type(model.product_code)}, value: {model.product_code}")
+                logger.info(f"seller_id type: {type(model.seller_id)}, value: {model.seller_id}")
+                logger.info(f"subject type: {type(model.subject)}, value: {model.subject}")
+                logger.info(f"timeout_express type: {type(model.timeout_express)}, value: {model.timeout_express}")
                 
                 # 创建APP支付请求
-                logger.info(f"创建APP支付订单   {model.to_alipay_dict()}   ")
-           
+                logger.info(f"创建APP支付订单模型: {model.to_alipay_dict()}")
+
+                # 获取模型的字典，并打印出 biz_content 字典的类型
+                biz_content_dict = model.to_alipay_dict()
+                logger.info(f"biz_content_dict: {json.dumps(biz_content_dict, ensure_ascii=False, sort_keys=True)}")
+                logger.info(f"biz_content_dict type: {type(biz_content_dict)}")
+
+                # 创建支付宝请求对象
                 request_obj = AlipayTradeAppPayRequest(biz_model=model)
-      
+
+                # 设置通知 URL
                 request_obj.notify_url = self.current_config.get('notify_url', 'https://alipaytest.onrender.com/api/alipay/notify')
+                logger.info(f"notify_url: {request_obj.notify_url}")
+
+                # 打印请求参数
+                params = request_obj.get_params()
+                logger.info(f"请求参数: {json.dumps(params, ensure_ascii=False, sort_keys=True)}")
                 
-     
-                logger.info(f"创建APP支付订单   {json.dumps(request_obj.get_params(), ensure_ascii=False, sort_keys=True)}   ")
                 # 执行请求，获取订单字符串
-                order_string = self.alipay_client.sdk_execute(request_obj)
-             
-                logger.info(f"创建APP支付订单   3   ")
-                
+                try:
+                    order_string = self.alipay_client.sdk_execute(request_obj)
+                    logger.info(f"支付宝订单字符串: {order_string}")
+                except Exception as e:
+                    logger.error(f"支付宝SDK执行失败: {e}")
+                    raise HTTPException(status_code=500, detail=f"支付宝SDK执行失败: {str(e)}")
+
+                # 返回成功信息
                 logger.info(f"APP支付订单创建成功，订单号: {payment_request.out_trade_no}")
-                
                 return {
                     "success": True,
                     "message": "APP订单创建成功",
@@ -340,10 +355,11 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgrluf8ZIERvuHr6P2zRGvX6dm8iQJrJACfHh
                         "payment_type": "app"
                     }
                 }
-                
+
             except Exception as e:
                 logger.error(f"创建APP支付订单失败: {e}")
                 raise HTTPException(status_code=500, detail=f"创建APP支付订单失败: {str(e)}")
+
         
         @self.app.get("/payment/result", response_class=HTMLResponse)
         async def payment_result(request: Request):
