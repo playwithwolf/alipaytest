@@ -311,32 +311,15 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgrluf8ZIERvuHr6P2zRGvX6dm8iQJrJACfHh
                 # 构建APP支付请求模型
                 model = AlipayTradeAppPayModel()
 
+                model.out_trade_no = payment_request.out_trade_no
+                model.total_amount = str(payment_request.total_amount)
+                model.subject = payment_request.subject
                 # 确保所有数字字段为字符串类型
                 model.timeout_express = "90m"
-                model.total_amount = str(payment_request.total_amount)  # 确保 total_amount 是字符串类型
-                model.seller_id = str("2088301194649043")  # 确保 seller_id 是字符串类型
                 model.product_code = "QUICK_MSECURITY_PAY"
-                model.body = "Iphone6 16G"
-                model.subject = "iphone"
-                model.out_trade_no = "201800000001201"
+            
                 
-                # 打印每个字段的类型
-                logger.info(f"total_amount type: {type(model.total_amount)}, value: {model.total_amount}")
-                logger.info(f"body type: {type(model.body)}, value: {model.body}")
-                logger.info(f"out_trade_no type: {type(model.out_trade_no)}, value: {model.out_trade_no}")
-                logger.info(f"product_code type: {type(model.product_code)}, value: {model.product_code}")
-                logger.info(f"seller_id type: {type(model.seller_id)}, value: {model.seller_id}")
-                logger.info(f"subject type: {type(model.subject)}, value: {model.subject}")
-                logger.info(f"timeout_express type: {type(model.timeout_express)}, value: {model.timeout_express}")
-                
-                # 创建APP支付请求
-                logger.info(f"创建APP支付订单模型: {model.to_alipay_dict()}")
-
-                # 获取模型的字典，并打印出 biz_content 字典的类型
-                biz_content_dict = model.to_alipay_dict()
-                logger.info(f"biz_content_dict: {json.dumps(biz_content_dict, ensure_ascii=False, sort_keys=True)}")
-                logger.info(f"biz_content_dict type: {type(biz_content_dict)}")
-
+ 
                 # 创建支付宝请求对象
                 request_obj = AlipayTradeAppPayRequest(model)
 
@@ -344,9 +327,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgrluf8ZIERvuHr6P2zRGvX6dm8iQJrJACfHh
                 request_obj.notify_url = self.current_config.get('notify_url', 'https://alipaytest.onrender.com/api/alipay/notify')
                 logger.info(f"notify_url: {request_obj.notify_url}")
 
-                # 打印请求参数
-                params = request_obj.get_params()
-                logger.info(f"请求参数: {json.dumps(params, ensure_ascii=False, sort_keys=True)}")
+               
                 
                 # 执行请求，获取订单字符串
                 try:
