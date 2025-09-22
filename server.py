@@ -307,7 +307,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgrluf8ZIERvuHr6P2zRGvX6dm8iQJrJACfHh
                 # model.product_code = "QUICK_MSECURITY_PAY"
 
                 model.timeout_express = "90m"
-                model.total_amount = "9.00"
+                model.total_amount = "1"
                 model.seller_id = "2088301194649043"
                 model.product_code = "QUICK_MSECURITY_PAY"
                 model.body = "Iphone6 16G"
@@ -316,14 +316,14 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgrluf8ZIERvuHr6P2zRGvX6dm8iQJrJACfHh
               
                 
                 # 创建APP支付请求
-                logger.info(f"创建APP支付订单   1   : {model.dict()}")
+                logger.info(f"创建APP支付订单   1   ")
            
                 request_obj = AlipayTradeAppPayRequest(biz_model=model)
       
                 request_obj.notify_url = self.current_config.get('notify_url', 'https://alipaytest.onrender.com/api/alipay/notify')
                 
      
-                logger.info(f"创建APP支付订单   2   : {request_obj.dict()}")
+                logger.info(f"创建APP支付订单   2   ")
                 # 执行请求，获取订单字符串
                 order_string = self.alipay_client.sdk_execute(request_obj)
              
