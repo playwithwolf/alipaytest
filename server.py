@@ -85,20 +85,32 @@ class AlipayH5Server:
             #                 'notify_url': 'https://alipaytest.onrender.com/api/alipay/notify',
             #                 'return_url': 'https://alipaytest.onrender.com/payment/result'
             #   }
-
-
             default_config = {
-                'app_id': '2021005194600693',  # 沙箱应用ID，请替换为实际的
+                'app_id': '9021000149662306',  # 沙箱应用ID，请替换为实际的
                 'private_key': '''-----BEGIN RSA PRIVATE KEY-----
-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
+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
 -----END RSA PRIVATE KEY-----''',
                 'alipay_public_key': '''-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgrluf8ZIERvuHr6P2zRGvX6dm8iQJrJACfHh1zdUEDWTxuNz3RBDGMXRTu8iZ3szGVtaWVBz5g5/fyMRCmWDAKRMkppSmm0F5jxI8xHxdWyIJ+6ab8QcpLaqTbQSJXRzt1lsGkPcMu69dLp7/FSemJAxbZ4N2ZtSqGAroTJtmTUGPsGxDV7BqBUdNU2AbKSyU6TlU4Tib/K21dQABftnTffj7VrVtAhuLhuDqBxmDWlc5vjACNnBcs8p83xLg4RLyyd0zhsmS5EscSubB/DKkZ7xPoWjGKqSDN3Hyh6pZRVIo9CEcZL9T7f3z0g+ho7EXWRbVMz3EKpZ5LmR19bMpQIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1YJLtGccnNJdE3HXQ5gvRr2N434ULwI2/U7EoF+z6CiJ0i64KWl9UdX7bLb7Sluj2OQjdCAFvJi1EVEyLf5vPKUxAnBPHmpG7oCTpt/FW26G+Lo7XvvBATGzT9sCdk1w8kgbWwpQbUoivXf/8zo6djYgyPByoWL2afuPMusTDX8GEalCvxIOK4aFhWssN7rfMUsXJapd1a3uGX2AV7y+rK6QlzDHEYkj7I8aVIZCxfqyu7QxgBRXsqhLXBX7HunrDN8EvUKX2IX7ExChRl8m7itCmZFdMmpH4li/8SybgRLbiBDe1U1uaZZQjFGDda2Fx4m2Q76GO5OFER6tbC+s+wIDAQAB
 -----END PUBLIC KEY-----''',
                 'gateway': 'https://openapi.alipay.com/gateway.do',
                 'notify_url': 'https://alipaytest.onrender.com/api/alipay/notify',
                 'return_url': 'https://alipaytest.onrender.com/payment/result'
             }
+
+
+#             default_config = {
+#                 'app_id': '2021005194600693',  # 沙箱应用ID，请替换为实际的
+#                 'private_key': '''-----BEGIN RSA PRIVATE KEY-----
+# MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCKNM+zw/K8bBaIsXOoNTXBYb2tWA9eVesigNwKjK+VL71ydo+FvN23X6i9LR1pAkVZAl7LuH839rPuC+jkmaN9F7n/VYwdBmilL+ovA+fLPnRII8weXTEVrHIS8oWGzPDo25yKbfMUnBw5XZZGAl2z+Q9idMv5TBy15O0rQsRuc67Qy5TtmiX3reiCCUuNGHvk73A2KFu/ZMN+PF/vk1sMTpFLJdtBOWoh3pAGCZ61uPdXS0CGph6TIznNnFJJxvhx6nnFMSHqx2ejd6jAyloWR/NIBAvcHRmq968EsWdhXJU5cJPf0bbHB8yckd+uKHFGUbcz8yDOxWtyT02E5gelAgMBAAECggEAfZMMoZ7J//AJ7XumxdBLHoGLkWQw2psggYIp7J/1rYzqCoW1VGPN5J7TN8g1L8NzdTOVJG9nkFblF8bUflkm1jNnuZtmKr02+dh2ZO+cfewqRZ3ZCkHMpo/AOn0HW/r8beeU7aaHNlO9xVXGg6gEsdD77I6JAuPoNlFiOWt6BYxa0JaL047rDgcFISDtIfTqjWAq1cL7QFyHOrkX4i12yrxBLw4u36zhlIy3wyiesVTafLbVX7MJ2bHD5cbaJRECJPOXKeZDFXNKdYrOpLU11wvcQCwZa91J8A+9mlfF2tdfbHuWXiAj7bxgJtlHLf7B45s0/1GlGOJlCV38NmU9QQKBgQDD/ZnigNwniUx9l2JvN8XritsPJMuJ+Nsxn4NmXhR/oseUhb2tD8tUz7A1qLWKegPjHmxphWiwc/VrizaHUMkqHU3VZ2Q+9EJwibxruSIQigWUGFkIH7o0Q1mZXp1tuJFxQEopgpVrZ4B5k2Sj3l0tH+5DM1+ysezyIt0Wv5jusQKBgQC0heGkJIN/UbWYBbtT416kaQvK/FUA6fncQ+n6XeeP+YAgVztQqOdcSgQH82wRnGjVtMUWdSfOuFC/FvgMp65xdx0Ocflr2S0fIWDet8EkebW3UFcB08U/gADn28BA0w2NYTtZO8GMxIbSZGTIUrhHCHmKGPUwwNebFLufkZ+tNQKBgQDAiuQjIXUnYjtDJvYNTT2jqUaMGhnb8h9lINB2QPbibYik4L72xg17xI3YKWYwJK6s8baP9ABlWYZBoQJw7WyzcxaEEI7rSgv7g1UYf0h39yCD3WeaE5Faxs+/XLRMloZMPFyfaypf2c7doW+9jTb8neH1IwNhCms9dgK91nzoAQKBgHaB+Wn3KngXnN3KzXo5pjTKXRqJYggykXue/egFY3GpugoBGghOiWuVj2Xk0EoTYuMAQ+4FRPe5GhEINBiir6r/Jg0Il1PMg4mPMPekq9+VIszPqf6iFjgkgPO02FX190ybywk+aEZP8a4Gh/7WBvFix973mWbDAgdlqfIL+EYNAoGBAKm8/JNFxuybVVx3dVNNOaTKP+nSUJVXqqvSsMekDDSYYNPtHlRHPsXP26R4HpelFIvweE4qDbS+qJ6zt7I4Sx2L4ISyvd0RWvInsRH2/YCDcIlMbJeqQX8cKpoVt/9rMh3PIEN+iyD10l2EUCv5wMySwS88k98aBjd5HM+A8V4f
+# -----END RSA PRIVATE KEY-----''',
+#                 'alipay_public_key': '''-----BEGIN PUBLIC KEY-----
+# MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgrluf8ZIERvuHr6P2zRGvX6dm8iQJrJACfHh1zdUEDWTxuNz3RBDGMXRTu8iZ3szGVtaWVBz5g5/fyMRCmWDAKRMkppSmm0F5jxI8xHxdWyIJ+6ab8QcpLaqTbQSJXRzt1lsGkPcMu69dLp7/FSemJAxbZ4N2ZtSqGAroTJtmTUGPsGxDV7BqBUdNU2AbKSyU6TlU4Tib/K21dQABftnTffj7VrVtAhuLhuDqBxmDWlc5vjACNnBcs8p83xLg4RLyyd0zhsmS5EscSubB/DKkZ7xPoWjGKqSDN3Hyh6pZRVIo9CEcZL9T7f3z0g+ho7EXWRbVMz3EKpZ5LmR19bMpQIDAQAB
+# -----END PUBLIC KEY-----''',
+#                 'gateway': 'https://openapi.alipay.com/gateway.do',
+#                 'notify_url': 'https://alipaytest.onrender.com/api/alipay/notify',
+#                 'return_url': 'https://alipaytest.onrender.com/payment/result'
+#             }
             
             # 尝试从环境变量或配置文件读取配置
             # config = self.load_alipay_config() or default_config
