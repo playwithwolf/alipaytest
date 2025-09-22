@@ -23,8 +23,8 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ
 -----END PUBLIC KEY-----`,
     
     // 支付宝网关地址
-    // gateway: 'https://openapi.alipay.com/gateway.do', // 正式环境
-     gateway: 'https://openapi-sandbox.dl.alipaydev.com/gateway.do', // 沙箱环境
+    gateway: 'https://openapi.alipay.com/gateway.do', // 正式环境
+    // gateway: 'https://openapi-sandbox.dl.alipaydev.com/gateway.do', // 沙箱环境
     
     // 异步通知地址 - 可选
     // 支付完成后，支付宝会向这个地址发送支付结果

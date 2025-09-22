@@ -11,7 +11,8 @@ class AlipayH5 {
             private_key: config.private_key || '',
             alipay_public_key: config.alipay_public_key || '',
            //gateway: config.gateway || 'https://openapi-sandbox.dl.alipaydev.com/gateway.do',
-            gateway:  'https://openapi-sandbox.dl.alipaydev.com/gateway.do',
+           // gateway:  'https://openapi-sandbox.dl.alipaydev.com/gateway.do',
+            gateway:  'https://openapi.alipay.com/gateway.do',
             notify_url: config.notify_url || '',
             return_url: config.return_url || '',
             charset: 'UTF-8',
@@ -23,7 +24,7 @@ class AlipayH5 {
         // 验证配置
         this.validateConfig();
         
-        console.log('支付宝H5支付实例初始化完成', this.config);
+        console.log('支付宝支付实例初始化完成', this.config);
     }
     
     /**
@@ -47,11 +48,20 @@ class AlipayH5 {
     }
     
     /**
-     * 创建支付订单（使用后端API）
+     * 创建H5支付订单（使用后端API）
      * @param {Object} orderInfo 订单信息
      * @returns {Promise} 支付结果
      */
     async createPayment(orderInfo) {
+        return this.createH5Payment(orderInfo);
+    }
+    
+    /**
+     * 创建H5支付订单
+     * @param {Object} orderInfo 订单信息
+     * @returns {Promise} 支付结果
+     */
+    async createH5Payment(orderInfo) {
         try {
             // 准备订单数据
             const paymentRequest = {
@@ -60,9 +70,9 @@ class AlipayH5 {
                 subject: orderInfo.subject
             };
             
-            console.log('发送支付请求到后端API:', paymentRequest);
+            console.log('发送H5支付请求到后端API:', paymentRequest);
             
-            // 调用后端API创建订单
+            // 调用后端API创建H5订单
             const response = await fetch('/api/alipay/create_order', {
                 method: 'POST',
                 headers: {
@@ -77,21 +87,75 @@ class AlipayH5 {
             }
             
             const result = await response.json();
-            console.log('后端API响应:', result);
+            console.log('H5支付API响应:', result);
             
             if (result.success) {
                 return {
                     success: true,
                     payment_url: result.data.pay_url,
                     order_no: result.data.out_trade_no,
-                    order_string: result.data.order_string
+                    order_string: result.data.order_string,
+                    payment_type: 'h5'
                 };
             } else {
-                throw new Error(result.message || '创建订单失败');
+                throw new Error(result.message || '创建H5订单失败');
             }
             
         } catch (error) {
-            console.error('创建支付订单失败:', error);
+            console.error('创建H5支付订单失败:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+    
+    /**
+     * 创建APP支付订单
+     * @param {Object} orderInfo 订单信息
+     * @returns {Promise} 支付结果
+     */
+    async createAppPayment(orderInfo) {
+        try {
+            // 准备订单数据
+            const paymentRequest = {
+                out_trade_no: orderInfo.out_trade_no || this.generateOrderNo(),
+                total_amount: parseFloat(orderInfo.total_amount),
+                subject: orderInfo.subject
+            };
+            
+            console.log('发送APP支付请求到后端API:', paymentRequest);
+            
+            // 调用后端API创建APP订单
+            const response = await fetch('/api/alipay/create_app_order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(paymentRequest)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: '网络错误' }));
+                throw new Error(errorData.detail || `HTTP ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('APP支付API响应:', result);
+            
+            if (result.success) {
+                return {
+                    success: true,
+                    order_no: result.data.out_trade_no,
+                    order_string: result.data.order_string,
+                    payment_type: 'app'
+                };
+            } else {
+                throw new Error(result.message || '创建APP订单失败');
+            }
+            
+        } catch (error) {
+            console.error('创建APP支付订单失败:', error);
             return {
                 success: false,
                 error: error.message

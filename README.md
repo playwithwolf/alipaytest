@@ -5,7 +5,9 @@
 ## 功能特性
 
 - ✅ **支付宝H5支付集成** - 完整的支付宝手机网站支付功能
+- ✅ **支付宝APP支付集成** - 完整的支付宝移动应用支付功能
 - ✅ **FastAPI后端服务** - 高性能的Python异步Web框架
+- ✅ **双支付模式支持** - 同时支持H5网页支付和APP移动支付
 - ✅ **动态配置管理** - 支持在线配置支付宝参数，无需重启服务
 - ✅ **配置持久化** - 配置自动保存到本地存储
 - ✅ **支付结果处理** - 支持同步返回和异步通知
@@ -119,10 +121,86 @@ GET /api/config
 
 ### 支付接口
 
-#### 异步通知
+#### 创建H5支付订单
+```http
+POST /api/alipay/create_order
+Content-Type: application/json
+
+{
+  "subject": "商品名称",
+  "total_amount": "0.01",
+  "out_trade_no": "20240101123456"
+}
+```
+
+**响应示例:**
+```json
+{
+  "success": true,
+  "message": "H5支付订单创建成功",
+  "payment_url": "https://openapi.alipaydev.com/gateway.do?...",
+  "payment_type": "h5",
+  "out_trade_no": "20240101123456"
+}
+```
+
+#### 创建APP支付订单
+```http
+POST /api/alipay/create_app_order
+Content-Type: application/json
+
+{
+  "subject": "商品名称",
+  "total_amount": "0.01",
+  "out_trade_no": "20240101123456"
+}
+```
+
+**响应示例:**
+```json
+{
+  "success": true,
+  "message": "APP支付订单创建成功",
+  "order_string": "alipay_sdk=alipay-sdk-java-4.38.10.ALL&app_id=2021000...",
+  "payment_type": "app",
+  "out_trade_no": "20240101123456"
+}
+```
+
+#### 异步通知回调
 ```http
 POST /api/alipay/notify
+Content-Type: application/x-www-form-urlencoded
 ```
+
+**说明**: 支付宝服务器会在支付完成后向此接口发送异步通知，用于确认支付结果。
+
+**重要参数**:
+- `out_trade_no`: 商户订单号
+- `trade_no`: 支付宝交易号
+- `trade_status`: 交易状态（TRADE_SUCCESS=支付成功，TRADE_FINISHED=交易完成）
+- `total_amount`: 交易金额
+- `subject`: 商品名称
+- `sign`: 签名
+- `sign_type`: 签名类型（通常为RSA2）
+
+**响应格式**:
+- 验证成功且处理完成: 返回 `success`
+- 验证失败或处理异常: 返回 `fail`
+
+**Postman测试示例**:
+```
+POST http://localhost:8000/api/alipay/notify
+Content-Type: application/x-www-form-urlencoded
+
+out_trade_no=TEST_ORDER_123&trade_no=2024012212345678901&trade_status=TRADE_SUCCESS&total_amount=0.01&subject=测试商品&app_id=your_app_id&sign=mock_signature&sign_type=RSA2
+```
+
+**注意事项**:
+1. 异步通知同时适用于H5支付和APP支付
+2. 系统会验证支付宝的签名确保通知真实性
+3. 只有返回`success`，支付宝才会停止重复通知
+4. 建议在生产环境中添加幂等性处理，避免重复处理同一笔订单
 
 ### 其他接口
 
@@ -144,6 +222,103 @@ h5python/
 ├── alipay.js             # 支付宝SDK封装
 └── config.js             # 配置文件
 ```
+
+## 使用说明
+
+### H5支付使用
+
+1. **网页端使用**:
+   - 访问 `http://localhost:8000`
+   - 选择支付类型为 "H5支付"
+   - 填写订单信息并点击支付
+   - 系统会跳转到支付宝支付页面
+
+2. **API调用**:
+   ```javascript
+   // 创建H5支付订单
+   const response = await fetch('/api/alipay/create_order', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({
+       subject: '测试商品',
+       total_amount: '0.01',
+       out_trade_no: 'ORDER_' + Date.now()
+     })
+   });
+   
+   const result = await response.json();
+   if (result.success) {
+     // 跳转到支付页面
+     window.location.href = result.payment_url;
+   }
+   ```
+
+### APP支付使用
+
+1. **网页端测试**:
+   - 访问 `http://localhost:8000`
+   - 选择支付类型为 "APP支付"
+   - 填写订单信息并点击支付
+   - 系统会显示订单字符串，可复制或下载
+
+2. **移动应用集成**:
+   ```javascript
+   // 创建APP支付订单
+   const response = await fetch('/api/alipay/create_app_order', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({
+       subject: '测试商品',
+       total_amount: '0.01',
+       out_trade_no: 'ORDER_' + Date.now()
+     })
+   });
+   
+   const result = await response.json();
+   if (result.success) {
+     // 将订单字符串传递给移动端SDK
+     const orderString = result.order_string;
+     // 调用移动端支付宝SDK
+     // Android: AlipayAPI.pay(orderString)
+     // iOS: [[AlipaySDK defaultService] payOrder:orderString]
+   }
+   ```
+
+3. **UniApp集成示例**:
+   ```javascript
+   // UniApp中使用APP支付
+   uni.request({
+     url: 'http://your-server.com/api/alipay/create_app_order',
+     method: 'POST',
+     data: {
+       subject: '测试商品',
+       total_amount: '0.01',
+       out_trade_no: 'ORDER_' + Date.now()
+     },
+     success: (res) => {
+       if (res.data.success) {
+         // 调用支付宝支付
+         uni.requestPayment({
+           provider: 'alipay',
+           orderInfo: res.data.order_string,
+           success: (payRes) => {
+             console.log('支付成功', payRes);
+           },
+           fail: (err) => {
+             console.log('支付失败', err);
+           }
+         });
+       }
+     }
+   });
+   ```
+
+### 支付类型选择
+
+- **H5支付**: 适用于手机浏览器、微信内置浏览器等网页环境
+- **APP支付**: 适用于原生移动应用、UniApp、React Native等移动应用环境
+
+系统会根据选择的支付类型调用对应的API接口，并返回相应的支付信息。
 
 ## 开发说明
 

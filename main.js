@@ -120,12 +120,37 @@ async function handlePayment() {
             return;
         }
         
+        // 获取支付类型
+        const paymentType = document.getElementById('payment_type')?.value || 'h5';
+        
         // 显示加载状态
-        showLoading('正在创建支付订单...');
+        showLoading(`正在创建${paymentType.toUpperCase()}支付订单...`);
         
         // 创建支付宝实例并发起支付
         const alipayInstance = new AlipayH5(config);
-        await alipayInstance.pay(orderInfo);
+        
+        let result;
+        if (paymentType === 'app') {
+            // 创建APP支付订单
+            result = await alipayInstance.createAppPayment(orderInfo);
+        } else {
+            // 创建H5支付订单
+            result = await alipayInstance.createH5Payment(orderInfo);
+        }
+        
+        hideLoading();
+        
+        if (result.success) {
+            if (paymentType === 'app') {
+                // APP支付：显示订单字符串供客户端使用
+                showAppPaymentResult(result);
+            } else {
+                // H5支付：跳转到支付页面
+                window.location.href = result.payment_url;
+            }
+        } else {
+            showError('支付订单创建失败: ' + result.error);
+        }
         
     } catch (error) {
         hideLoading();
@@ -231,6 +256,89 @@ function showPaymentResult(result) {
     
     resultArea.style.display = 'block';
     resultArea.scrollIntoView({ behavior: 'smooth' });
+}
+
+/**
+ * 显示APP支付结果
+ */
+function showAppPaymentResult(result) {
+    const resultDiv = document.createElement('div');
+    resultDiv.className = 'app-payment-result';
+    resultDiv.innerHTML = `
+        <h3>📱 APP支付订单创建成功</h3>
+        <div class="result-content">
+            <p><strong>订单号:</strong> ${result.order_no}</p>
+            <p><strong>支付类型:</strong> APP支付</p>
+            <div class="order-string-section">
+                <p><strong>订单字符串:</strong></p>
+                <textarea id="orderStringText" readonly style="width: 100%; height: 120px; font-family: monospace; font-size: 12px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">${result.order_string}</textarea>
+                <div style="margin-top: 10px;">
+                    <button onclick="copyOrderString()" style="background: #1890ff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">复制订单字符串</button>
+                    <button onclick="downloadOrderString()" style="background: #52c41a; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 8px;">下载为文件</button>
+                </div>
+            </div>
+            <div class="usage-info" style="margin-top: 15px; padding: 10px; background: #f6f8fa; border-radius: 4px;">
+                <h4>📋 使用说明：</h4>
+                <ul style="margin: 8px 0; padding-left: 20px; font-size: 14px;">
+                    <li>将订单字符串传递给移动端APP</li>
+                    <li>在APP中调用支付宝SDK进行支付</li>
+                    <li>支付完成后会收到异步通知</li>
+                </ul>
+            </div>
+        </div>
+        <button onclick="this.parentElement.remove()" style="margin-top: 15px; background: #f5f5f5; border: 1px solid #d9d9d9; padding: 8px 16px; border-radius: 4px; cursor: pointer;">关闭</button>
+    `;
+    
+    // 添加样式
+    resultDiv.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        z-index: 1000;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    `;
+    
+    document.body.appendChild(resultDiv);
+}
+
+/**
+ * 复制订单字符串
+ */
+function copyOrderString() {
+    const textarea = document.getElementById('orderStringText');
+    if (textarea) {
+        textarea.select();
+        document.execCommand('copy');
+        showSuccess('订单字符串已复制到剪贴板');
+    }
+}
+
+/**
+ * 下载订单字符串为文件
+ */
+function downloadOrderString() {
+    const textarea = document.getElementById('orderStringText');
+    if (textarea) {
+        const content = textarea.value;
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `alipay_order_${Date.now()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showSuccess('订单字符串文件已下载');
+    }
 }
 
 /**

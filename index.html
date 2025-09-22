@@ -85,6 +85,14 @@
             <div class="order-info">
                 <h3>📋 订单信息</h3>
                 <div class="form-group">
+                    <label for="payment_type">支付类型</label>
+                    <select id="payment_type">
+                        <option value="h5">H5支付 (网页支付)</option>
+                        <option value="app">APP支付 (移动应用)</option>
+                    </select>
+                    <small>选择支付方式：H5适用于网页，APP适用于移动应用</small>
+                </div>
+                <div class="form-group">
                     <label for="subject">商品名称</label>
                     <input type="text" id="subject" placeholder="请输入商品名称" value="测试商品">
                 </div>
