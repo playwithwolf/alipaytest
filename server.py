@@ -297,17 +297,26 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgrluf8ZIERvuHr6P2zRGvX6dm8iQJrJACfHh
                 
                 # 构建APP支付请求模型
                 model = AlipayTradeAppPayModel()
+                logger.info("创建APP支付订单1 ")
                 model.out_trade_no = payment_request.out_trade_no
+                logger.info("创建APP支付订单2 ")
                 model.total_amount = str(payment_request.total_amount)
+                logger.info("创建APP支付订单3 ")
                 model.subject = payment_request.subject
+                logger.info("创建APP支付订单4 ")
                 model.product_code = "QUICK_MSECURITY_PAY"
+                logger.info("创建APP支付订单5 ")
                 
                 # 创建APP支付请求
+                logger.info("创建APP支付订单6 ")
                 request_obj = AlipayTradeAppPayRequest(biz_model=model)
+                logger.info("创建APP支付订单7 ")
                 request_obj.notify_url = self.current_config.get('notify_url', 'https://alipaytest.onrender.com/api/alipay/notify')
                 
+                logger.info("创建APP支付订单8 ")
                 # 执行请求，获取订单字符串
                 order_string = self.alipay_client.sdk_execute(request_obj)
+                logger.info("创建APP支付订单9 ")
                 
                 logger.info(f"APP支付订单创建成功，订单号: {payment_request.out_trade_no}")
                 
