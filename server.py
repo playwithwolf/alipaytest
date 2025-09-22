@@ -316,15 +316,18 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgrluf8ZIERvuHr6P2zRGvX6dm8iQJrJACfHh
               
                 
                 # 创建APP支付请求
+                logger.info(f"创建APP支付订单   1   : {model.dict()}")
            
                 request_obj = AlipayTradeAppPayRequest(biz_model=model)
       
-                # request_obj.notify_url = self.current_config.get('notify_url', 'https://alipaytest.onrender.com/api/alipay/notify')
+                request_obj.notify_url = self.current_config.get('notify_url', 'https://alipaytest.onrender.com/api/alipay/notify')
                 
      
+                logger.info(f"创建APP支付订单   2   : {request_obj.dict()}")
                 # 执行请求，获取订单字符串
                 order_string = self.alipay_client.sdk_execute(request_obj)
              
+                logger.info(f"创建APP支付订单   3   ")
                 
                 logger.info(f"APP支付订单创建成功，订单号: {payment_request.out_trade_no}")
                 
