@@ -723,12 +723,33 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgrluf8ZIERvuHr6P2zRGvX6dm8iQJrJACfHh
                 api_response = self.alipay_client.execute(request_obj)
                 
                 logger.info(f"支付宝API查询响应: {api_response}")
+                logger.info(f"API响应类型: {type(api_response)}")
                 
-                if api_response and hasattr(api_response, 'code') and api_response.code == "10000":
-                    api_trade_status = getattr(api_response, 'trade_status', None)
-                    api_total_amount = getattr(api_response, 'total_amount', None)
-                    api_trade_no = getattr(api_response, 'trade_no', None)
-                    api_out_trade_no = getattr(api_response, 'out_trade_no', None)
+                # 处理API响应，可能是字符串或对象
+                api_response_data = None
+                if isinstance(api_response, str):
+                    try:
+                        api_response_data = json.loads(api_response)
+                        logger.info(f"解析后的API响应: {api_response_data}")
+                    except json.JSONDecodeError as e:
+                        logger.error(f"API响应JSON解析失败: {e}")
+                        api_response_data = None
+                elif hasattr(api_response, 'code'):
+                    # 如果是对象，直接使用
+                    api_response_data = {
+                        'code': api_response.code,
+                        'msg': getattr(api_response, 'msg', ''),
+                        'trade_status': getattr(api_response, 'trade_status', None),
+                        'total_amount': getattr(api_response, 'total_amount', None),
+                        'trade_no': getattr(api_response, 'trade_no', None),
+                        'out_trade_no': getattr(api_response, 'out_trade_no', None)
+                    }
+                
+                if api_response_data and api_response_data.get('code') == "10000":
+                    api_trade_status = api_response_data.get('trade_status')
+                    api_total_amount = api_response_data.get('total_amount')
+                    api_trade_no = api_response_data.get('trade_no')
+                    api_out_trade_no = api_response_data.get('out_trade_no')
                     
                     # 验证交易状态
                     if api_trade_status == "TRADE_SUCCESS":
@@ -771,8 +792,17 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgrluf8ZIERvuHr6P2zRGvX6dm8iQJrJACfHh
                             "error_code": "INVALID_TRADE_STATUS"
                         })
                 else:
-                    error_msg = getattr(api_response, 'msg', '查询失败') if api_response else '查询失败'
-                    error_code = getattr(api_response, 'sub_code', 'QUERY_FAILED') if api_response else 'QUERY_FAILED'
+                    # 处理API查询失败的情况
+                    if api_response_data:
+                        error_msg = api_response_data.get('msg', '查询失败')
+                        error_code = api_response_data.get('sub_code', 'QUERY_FAILED')
+                    elif isinstance(api_response, str):
+                        error_msg = '响应格式错误'
+                        error_code = 'INVALID_RESPONSE_FORMAT'
+                    else:
+                        error_msg = getattr(api_response, 'msg', '查询失败') if api_response else '查询失败'
+                        error_code = getattr(api_response, 'sub_code', 'QUERY_FAILED') if api_response else 'QUERY_FAILED'
+                    
                     logger.error(f"支付宝API查询失败: {error_msg} ({error_code})")
                     return JSONResponse({
                         "success": False,
